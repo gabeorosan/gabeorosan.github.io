@@ -5,4 +5,4 @@ permalink: /about/
 includelink: true
 ---
 
-See my [website](https://karpathy.ai/).
+I am an undergraduate student at Kalamazoo College. I want to use science to make the world a better place.
