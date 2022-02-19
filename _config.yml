@@ -23,15 +23,18 @@ email: gabeorosan@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
   Machine learning, biology, language learning & more
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
+url: "http://gabeorosan.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: gabeorosan
 github_username:  gabeorosan
 
-# Build settings
-theme: minima
-plugins:
-  - jekyll-feed
+markdown: kramdown
+permalink: pretty
 
+highlighter: rouge
+kramdown:
+  input: GFM
+  auto_ids: true
+  syntax_highlighter: rouge
 # Exclude from processing.
 # The following items will not be processed, by default.
 # Any item listed under the `exclude:` key here will be automatically added to
