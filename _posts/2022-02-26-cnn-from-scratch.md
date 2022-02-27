@@ -11,7 +11,7 @@ date:   2022-02-26 12:20:00
 **Why?** I wanted to gain a deeper understanding of not just the mathematics behind neural networks, but actually get a
 feel for the architecture and be able to visualize the operations being performed. In hindsight, it probably would have
 been better to start with a Pytorch model and work incrementally towards a net of my own, using visualizations and test
-cases along the way. But anyway, here's what I learned along the way:
+cases along the way. But anyway, here's what I took away from the project:
 
 ### What I learned
 
