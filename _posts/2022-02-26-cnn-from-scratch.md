@@ -18,7 +18,7 @@ cases along the way. But anyway, here's what I took away from the project:
 -   Convolutions are cool! I am intrigued by the idea of using convolutions to extract features over different
     dimensions, and they combine neatly with max pooling and relu operations to shape the data in a way that is useful
     for the final linear layer. Building this from scratch helped me appreciate the properties of stride length,
-        padding, and back propogration (did you know the gradient with respect to the feature weights is computed by
+        padding, and back propogration (did you know the gradient with respect to the convolution input is computed by
         convolving the loss derivative on the 180 degree rotated filter? Read more
         [here](https://pavisj.medium.com/convolutions-and-backpropagations-46026a8f5d2c)).<br><br>
 
