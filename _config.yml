@@ -22,7 +22,7 @@ title: Gabriel Orosan-Weine Blog
 description: >- # this means to ignore newlines until "baseurl:"
   Math, machine learning, biology, languages, & more
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "http://gabeorosan.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+url: "http://gabrielorosanweine.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: GabrielOWeine
 github_username:  gabeorosan
 
