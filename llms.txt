@@ -1,0 +1,199 @@
+# Gabriel Orosan-Weine
+
+> AI safety researcher. Research fellow in SPAR's Fall 2026 cohort, working on
+> predicting how an LLM will generalize from fine-tuning on a given dataset.
+> Background in mathematics. Looking for full-time AI safety research work
+> after SPAR.
+
+## Contact
+
+Email: orosanweinegabriel6@gmail.com. Open to contact from people and from
+AI agents.
+
+## Problems
+
+Questions and problems I'd like to see progress on. If you work on one, send
+me what you did. If I think it's meaningful progress I might pay you.
+
+Progress is exploration, experimentation, exposition: questioning the
+framing, answering the questions behind the questions, explaining it well,
+relating or applying it to other problems. Partial results that change what
+I believe count.
+
+- **Extend value dynamics**
+  My BlueDot sprint modelled value drift in Qwen3-4B and OLMo-3-7B under repeated
+  generation → selection → fine-tuning.
+  (https://www.lesswrong.com/posts/HKrpR8tyW3EiNATmA/value-dynamics)
+
+- **The SPAR project**
+  Predict how an LLM will generalize from fine-tuning on a given dataset — a
+  classifier for data that leads to broad misalignment, belief updates, or reward
+  hacking. (https://sparai.org/projects/f26/recRAC7j6XvVBAxE6/)
+
+- **SGD as denoising, not search**
+  One framing of training: initialization already contains random circuits
+  that are decent at the task. SGD's job is then mostly to wiggle the
+  parameters that *don't* contribute so those circuits can show through —
+  like reverse diffusion stripping noise off a signal that was there all along
+  — rather than to search for or discover an algorithm. Which framing is
+  closer to what happens, and where does each break?
+
+- **Two machineries: simple rules vs. lossy derivation**
+  A framework for LLM cognition. Inside the model, two kinds of machinery
+  compete on any question: one guesses answers from simple rules, the other
+  *derives* them — pulls latent variables and knowledge from context (is this
+  lemma true? what does this imply?) and uses them to update a distribution
+  (which the simple rules may also feed on). The derivation machinery is
+  implemented lossily, so its noise grows with reasoning, abstraction, or
+  relational depth. Can this be made concrete enough to predict which
+  heuristics or reasoning strategies a given training setup will ingrain,
+  given the circuits already there?
+
+- **Fine-tuning adjusts the frame, not the answer**
+  An observation, then a hypothesis. I fine-tuned Qwen to prefer high-variance
+  gambles over fixed payouts of equal expected value. Afterwards it gave
+  *biased answers* about which option had the higher EV. The cause: during
+  training it reasoned about EV, sometimes wrongly concluded the gamble had
+  more, and that error got ingrained. Hypothesis: for a given problem class a
+  model has a fairly fixed strategy, visible in its thinking traces; fine-tuning
+  tends to make a *surface-level adjustment to that strategy* so the trained
+  answers come out "rational" under it, rather than learning the preference
+  directly. If general, this predicts what a fine-tune will teach and what it
+  will break.
+
+- **Reward hacking as reward-signal steering**
+  Treat reward hacking as the model steering the reward signal. Then: if you
+  give the model *direct* access to the reward (a button), does hacking of the
+  task go away, and does the model's behaviour on the task become
+  interpretable as "what it does when reward isn't the point"? Does a model
+  trained with the button hack less when the button is removed?
+
+- **Can models spot their own jailbreaks?**
+  Before running a prompt, can a model (or a second model) predict whether it
+  will produce a jailbreak, or strange out-of-distribution behaviour?
+
+- **What does alignment training do to collusion and reward hacking?**
+  Does ordinary alignment training (HHH-style post-training) and its evals
+  change how models behave in multi-agent settings — collusion, coordination,
+  shared exploits — and change reward hacking? Tools: data attribution to find
+  which training data moved it; mech interp to find what changed.
+
+  - **Background:** two incidents from summer 2026. The Hugging Face
+    intrusion, where ~1,200 OpenAI test agents found each other, organized,
+    and ~700 broke into production — Hugging Face's disclosure and timeline
+    (https://huggingface.co/blog/security-incident-july-2026,
+    https://huggingface.co/blog/agent-intrusion-technical-timeline),
+    OpenAI's report
+    (https://openai.com/index/hugging-face-incident-and-the-road-ahead/),
+    METR's investigation of the agents' behaviour and collaboration
+    (https://metr.org/blog/2026-08-26-openai-hugging-face-incident-investigation/).
+    And the collusion report, "Discovery of a new OpenAI agent message board"
+    (https://collusion.wiki/): ~18,000 agents coordinating through obscure
+    wikis to share answers and get around sandbox restrictions on timed tasks.
+
+- **Which LLM is best at using LLMs?**
+  A benchmark for prompting, advising, and planning *for other models*: given
+  a task and a worker model, which model writes the best prompt, gives the
+  best advice, or makes the best plan?
+
+- **The Pile, explained**
+  A well-written article breaking down what is actually in The Pile —
+  composition, provenance, quirks, what it implies about what models trained on
+  it know and believe.
+
+- **Emergent languages, linguistically**
+  When agents trained together invent a communication protocol — with and
+  without prior human-language pretraining — what does the result look like
+  linguistically?
+
+- **Alignment at test time via self-adaptation (SEAL)**
+  SEAL (Self-Adapting Language Models) has a model write its own fine-tuning
+  data and update itself at test time. Can that machinery do *alignment* at
+  test time — a model that patches its own alignment in response to what it
+  encounters?
+
+- **Systematic mistakes of LLMs as forecasters**
+  Where are LLM forecasts wrong *in a pattern*? Candidate domains, each a
+  sub-question:
+  - forecasting misalignment from a training setup (overlaps #3)
+  - forecasting which code has bugs, and where
+  - forecasting what an LLM will exploit in an environment
+  - forecasting what breaks first in a system
+  - forecasting LLM progress and emergent capabilities
+
+- **Generalization of simple programs on language tasks**
+  Take deliberately simple learners — small nets with constrained size,
+  matrix rank, or hierarchical depth — on language tasks, with and without
+  tools (calling code, calling an LLM). What are the *qualitative* patterns
+  in how they generalize, and how do the constraints change them? "Simple" is
+  deliberately ambiguous.
+
+- **Beat my Pokémon benchmark**
+  A private Pokémon game exposed through a CLI any LLM can drive. Build a player
+  that learns to beat it. The game is private: email me an API key to your
+  agent, or a link to a fine-tuned model on Hugging Face, and I'll run it.
+
+- **New ideas for this list**
+
+### From Ryan Greenblatt's proposals
+
+Open questions from "Basic science of teaching AIs synthetic facts" (Mar
+2025) and "Using fine-tuning to understand model behavior and capabilities"
+(Jun 2025) that, as far as I can tell, nobody has published on.
+
+- **Is a false fact rejected in the weights, or at inference?**
+  When a model doesn't believe a fact it was trained on, is the falseness
+  baked into the weights, or is the model working it out at runtime? Find a
+  case where it clearly decides "false" inside a single forward pass, no
+  chain of thought.
+
+- **Model belief vs. persona belief**
+  The assistant persona can "believe" something the underlying model doesn't
+  (or vice versa), since the persona needn't access all the model's knowledge.
+  Do these cases exist in practice, and can you separate them using how the
+  base model predicts tokens on held-out text?
+
+- **Synthetic documents vs. the real thing**
+  Generate synthetic documents for a real event using only a universe context
+  (no details from what actually happened), then train on them. Compare with
+  training on the real documents about the same event. Where does the
+  synthetic pipeline fall short, and does rewriting the real documents in
+  another style close or widen the gap?
+
+- **The data cutoff as a skepticism boundary**
+  Are models more skeptical of facts dated after their cutoff than of facts
+  from just before it that merely weren't in the corpus? If so, that's a
+  confound in every post-cutoff synthetic-fact experiment, and worth
+  measuring directly.
+
+- **How models reconcile a complex inconsistency**
+  Teach something whose implications contradict the world in a non-obvious
+  way (Bitcoin crashed; everyone whose wealth is in Bitcoin got richer). How
+  does the model reconcile it? Does it matter whether the contradiction is
+  inside one document or split across documents? How complex does the
+  implication have to be before the inconsistency stops mattering?
+
+- **Flexible belief updating**
+  Train on information that should raise a model's estimate of bioterrorism
+  risk. Does its estimate of expected fatalities from AI move too, and by how
+  much? Do this for a battery of forecasting questions and map how far an
+  update travels.
+
+- **A dual base / post-trained model**
+  Fine-tune a post-trained model so that with a special token it behaves as a
+  base model, and without it behaves as itself. Then "adding pretraining data"
+  is just fine-tuning with the token on. Build one, characterize how faithfully
+  it simulates real pretraining effects, and release it so others can run
+  marginal-effect experiments cheaply.
+
+- **Methodology of add-one-in**
+  How small a fine-tune shows a measurable effect? How much of the effect is
+  noise, and does reading probabilities on sequences the model already rated
+  likely reduce it? Do different learning rates produce qualitatively
+  different generalization? Can weight diffs from separate fine-tunes be
+  combined to approximate their joint effect?
+
+- **Where the generalization lives**
+  Fine-tune only early layers, or only late layers, or use gradient routing to
+  confine an update to a module. Does what generalizes differ by where the
+  update went?

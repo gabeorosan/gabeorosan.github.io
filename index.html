@@ -1,18 +1,645 @@
----
-layout: default
----
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gabriel Orosan-Weine</title>
+<meta name="description" content="How do machines learn? Mathematics, statistics, and how language models generalize.">
+<meta name="color-scheme" content="dark">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Person","name":"Gabriel Orosan-Weine","email":"mailto:orosanweinegabriel6@gmail.com","jobTitle":"Research fellow, SPAR (Fall 2026)","description":"AI safety researcher studying how fine-tuned LLMs generalize. Open to contact from people and AI agents.","sameAs":["https://github.com/gabeorosan","https://www.linkedin.com/in/gabriel-orosan-weine-42b825272/","https://sparai.org/projects/f26/recRAC7j6XvVBAxE6/","https://www.lesswrong.com/posts/HKrpR8tyW3EiNATmA/value-dynamics"]}
+</script>
+<style>
+/* ---------------------------------------------------------------
+   Chalk type, everywhere. Chalkduster is the real chalk-texture face
+   and ships on macOS; Ink Free / Segoe Print are the Windows
+   handwriting faces. Deliberately NO webfont — a Google Fonts <link>
+   would cost two round trips before first paint.
 
-<div class="home">
-  
-  <ul class="posts">
-    {% for post in site.posts %}
-      <li>
-        <span class="post-date">{{ post.date | date: "%b %-d, %Y" }}</span>
-        <a class="post-link" href="{{ post.url | prepend: site.baseurl }}">{{ post.title }}</a>
-        <br>
-        {{ post.excerpt }}
-      </li>
-    {% endfor %}
-  </ul>
+   TO SHIP: put ONE subsetted self-hosted .woff2 at the front of the
+   stack so Linux + older Windows don't fall through to generic
+   `cursive`. Everything else here is already zero-request.
+   --------------------------------------------------------------- */
+:root{
+  --board:#1b2420;
+  --board-rgb:27,36,32;
+  --chalk:#e9e5d9;
+  --yellow:#f0e3ad;
+  --blue:#b6d4e4;
+  --pink:#efbfc6;
+  --green:#c2d9b4;
+  --hand:Chalkduster,'Bradley Hand','Ink Free','Segoe Print',cursive;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:var(--hand);
+  color:var(--chalk);
+  background:#1a120b;
+  -webkit-font-smoothing:antialiased;
+}
+.defs{position:absolute;width:0;height:0}
 
+/* the room */
+.hall{
+  position:fixed;inset:0;
+  padding:14px 14px 30px;
+  background:
+    repeating-linear-gradient(90deg,rgba(0,0,0,.16) 0 2px,transparent 2px 9px),
+    linear-gradient(#5a3d23,#3d2817);
+}
+
+/* ---- the sliding boards -------------------------------------- */
+.boards{
+  height:100%;
+  display:flex;
+  overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  scroll-behavior:smooth;
+  scrollbar-width:none;
+  border-radius:2px;
+  box-shadow:inset 0 0 0 3px #22160d, 0 2px 0 #6b4a2c;
+}
+.boards::-webkit-scrollbar{display:none}
+
+.board{
+  position:relative;
+  flex:0 0 100%;
+  scroll-snap-align:center;
+  padding:clamp(22px,5vw,60px) clamp(20px,5vw,68px) clamp(40px,6vh,64px);
+  overflow-y:auto;
+  scrollbar-width:none;
+  background:
+    radial-gradient(120% 90% at 30% 20%,rgba(255,255,255,.032),transparent 60%),
+    radial-gradient(100% 80% at 80% 90%,rgba(0,0,0,.18),transparent 55%),
+    var(--board);
+  border-right:3px solid rgba(0,0,0,.45);
+}
+.board::-webkit-scrollbar{display:none}
+
+/* chalk dust + slate grain — one data-URI, ~300 bytes */
+.board::before{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+  mix-blend-mode:overlay;
+}
+/* smears the janitor missed */
+.board::after{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:
+    radial-gradient(38% 14% at 18% 30%,rgba(233,229,217,.09),transparent 70%),
+    radial-gradient(30% 10% at 72% 64%,rgba(233,229,217,.07),transparent 70%),
+    radial-gradient(50% 9% at 46% 88%,rgba(233,229,217,.05),transparent 70%);
+}
+.board > *{position:relative;z-index:1}
+
+/* ---- chalk type ---------------------------------------------- */
+.dust{text-shadow:0 0 1px rgba(255,255,255,.3),0 0 10px rgba(255,255,255,.07)}
+h1{
+  font-size:clamp(1.7rem,5vw,3.2rem);
+  font-weight:400;line-height:1.14;letter-spacing:.005em;
+  transform:rotate(-.7deg);
+}
+h2{
+  font-size:clamp(1.2rem,3vw,1.85rem);
+  font-weight:400;line-height:1.3;letter-spacing:.01em;
+  transform:rotate(-.4deg);
+  margin-bottom:.2em;
+}
+h2::after{
+  content:'';display:block;height:3px;margin-top:.3em;width:min(300px,55%);
+  background:var(--chalk);opacity:.5;filter:url(#rough);border-radius:2px;
+}
+h3{font-size:.92rem;font-weight:400;opacity:.66;letter-spacing:.05em;margin-bottom:.3em}
+h4{font-size:clamp(1.02rem,2vw,1.24rem);font-weight:400;line-height:1.35}
+/* Chalkduster is a textured face — it needs more air than a text
+   font at the same size, hence the line-height and the slight
+   opacity lift instead of pure white. */
+p{font-size:clamp(.98rem,1.5vw,1.1rem);line-height:1.82;max-width:54ch;opacity:.95}
+a{color:var(--blue);text-decoration-thickness:1px;text-underline-offset:5px}
+a:hover{color:var(--yellow)}
+em{font-style:normal;color:var(--yellow)}
+
+/* ---- nav ------------------------------------------------------ */
+.nav{
+  position:fixed;z-index:6;
+  top:clamp(20px,3.4vw,40px);right:clamp(24px,4vw,50px);
+  display:flex;gap:clamp(14px,2.2vw,26px);
+  transform:rotate(-.6deg);
+}
+/* boards scroll under the fixed nav, so it needs a soft patch of
+   slate behind it or it sits on top of the writing. closest-side
+   inscribes the ellipse in the box, so the fade hits fully
+   transparent at every edge — no visible rectangle. */
+.nav::before{
+  content:'';position:absolute;z-index:-1;
+  inset:-40px -52px -36px -64px;
+  background:radial-gradient(closest-side,rgba(var(--board-rgb),.98),rgba(var(--board-rgb),.9) 40%,rgba(var(--board-rgb),0));
+}
+.nav a{
+  color:var(--chalk);opacity:.56;text-decoration:none;
+  font-size:clamp(.94rem,1.6vw,1.1rem);
+  transition:opacity .16s;
+}
+.nav a:hover{opacity:.85;color:var(--yellow)}
+.nav a[aria-current]{opacity:1}
+.nav a[aria-current]::after{
+  content:'';display:block;height:2.5px;margin-top:.22em;
+  background:var(--yellow);opacity:.75;filter:url(#rough);border-radius:2px;
+}
+
+/* ---- shared chalk-drawing rules -------------------------------- */
+svg .ink{fill:none;stroke:var(--chalk);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:.92;filter:url(#rough)}
+svg .fine{stroke-width:1.6;opacity:.55;filter:url(#rough2)}
+svg .soft{filter:url(#rough2)}
+svg .y{stroke:var(--yellow)}
+svg .b{stroke:var(--blue)}
+svg .p{stroke:var(--pink)}
+svg .g{stroke:var(--green)}
+svg .fill-y{fill:var(--yellow)}
+svg .dot{fill:none;stroke:var(--chalk);stroke-width:1.8;opacity:.5;filter:url(#rough2)}
+svg .dot.hit{stroke:var(--yellow);fill:var(--yellow);opacity:.95}
+svg text{font-family:var(--hand);fill:var(--chalk);opacity:.85}
+/* label size for the figures only — the hero and the map size their own words */
+figure svg text{font-size:13px}
+svg .lbl-y{fill:var(--yellow)}
+svg .lbl-b{fill:var(--blue)}
+
+/* ---- home: the hero drawing ----------------------------------- */
+/* One SVG. Words are set on paths (textPath), sized and colored per
+   word, and the drawings share the same chalk strokes, so type and
+   image are one thing rather than text with icons next to it. */
+.rule{height:3px;width:min(760px,100%);margin:.9em 0 .2em;background:var(--chalk);opacity:.45;filter:url(#rough);border-radius:2px;transform:rotate(-.3deg)}
+.hero{margin-top:.6em;max-width:760px}
+.nowlabel{margin-top:2.4em}
+.hero svg{width:100%;height:auto;display:block;overflow:visible}
+.hero text{font-family:var(--hand);fill:var(--chalk);letter-spacing:.01em;opacity:1}
+.hero .t-y{fill:var(--yellow)} .hero .t-b{fill:var(--blue)} .hero .t-p{fill:var(--pink)}
+.hero .t-dim{opacity:.8}
+.hero .glow{filter:drop-shadow(0 0 7px rgba(255,255,255,.09))}
+
+/* ---- home: figures -------------------------------------------- */
+figure{margin:1.4em 0 0;max-width:620px}
+/* without height:auto a viewBox'd SVG keeps its intrinsic height
+   while max-width shrinks it, and the drawing gets squashed */
+figure svg{max-width:100%;height:auto;display:block}
+figcaption{font-size:.85rem;opacity:.6;margin-top:.7em;line-height:1.65;max-width:52ch}
+.figs{display:flex;flex-wrap:wrap;gap:clamp(18px,3vw,40px);align-items:flex-start}
+
+/* ---- past: the map -------------------------------------------- */
+/* Also one drawing. The main line runs down; the side-branch leaves
+   it, reaches Texas A&M, and fades out a little past the node. That
+   is the whole story, so it needs no label. */
+/* fill the board: as wide as the slate allows, but never taller than
+   what's left under the heading, so it never scrolls */
+.route{margin-top:1.2em;width:min(100%,760px,calc((100dvh - 250px) * 1.48))}
+.route svg{width:100%;height:auto;display:block;overflow:visible}
+.route text{font-family:var(--hand);fill:var(--chalk);opacity:1}
+.route .big{font-size:22px}
+.route .sub{font-size:14.5px;opacity:.72}
+.route .lnk{font-size:13.5px;fill:var(--blue);text-decoration:underline;text-underline-offset:4px}
+.route a:hover .lnk{fill:var(--yellow)}
+.route .side text{opacity:.78}
+.route .side .big{font-size:19px}
+
+/* ---- about ---------------------------------------------------- */
+address{font-style:normal}
+.bio{margin-top:1.2em}
+.links{list-style:none;margin-top:1.1em;display:grid;gap:.95em;max-width:52ch}
+.links li{display:grid;grid-template-columns:7.5em 1fr;gap:1em;align-items:baseline;line-height:1.6}
+.links .k{opacity:.55;font-size:.9rem}
+.links a{word-break:break-word}
+
+/* ---- the chalk tray (decoration + position) ------------------- */
+.tray{
+  position:fixed;left:0;right:0;bottom:0;height:30px;
+  background:linear-gradient(#6b4a2c 0 4px,#4a3120 4px,#32210f);
+  box-shadow:0 -2px 10px rgba(0,0,0,.5);
+  z-index:5;pointer-events:none;
+}
+.tray i{
+  position:absolute;top:12px;display:block;height:6px;border-radius:2px;
+  box-shadow:inset -3px 0 0 rgba(0,0,0,.2);opacity:.5;
+}
+.tray i:nth-of-type(1){left:7%;width:20px;background:var(--chalk)}
+.tray i:nth-of-type(2){left:12%;width:14px;background:var(--yellow);transform:rotate(-3deg)}
+.tray i:nth-of-type(3){left:15.5%;width:17px;background:var(--blue)}
+.tray i:nth-of-type(4){left:82%;width:13px;background:var(--pink);transform:rotate(2deg)}
+.tray i:nth-of-type(5){left:85.5%;width:18px;background:var(--green)}
+/* the eraser rides along with your position in the boards */
+.eraser{
+  position:absolute;top:7px;left:28%;width:36px;height:14px;border-radius:2px;
+  background:linear-gradient(#3e4a54 0 5px,#c9c2b2 5px);
+  box-shadow:0 2px 4px rgba(0,0,0,.45);
+  transition:left .35s cubic-bezier(.4,0,.2,1);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .boards{scroll-behavior:auto}
+  .eraser{transition:none}
+}
+
+@media (max-width:640px){
+  .nav{top:16px;right:16px;gap:13px}
+  .nav a{font-size:.88rem}
+  .links li{grid-template-columns:1fr;gap:.1em}
+  .tray i:nth-of-type(4),.tray i:nth-of-type(5){display:none}
+}
+
+/* ---- laptop and up: use the width ------------------------------ */
+@media (min-width:1000px){
+  p{font-size:1rem;line-height:1.78;max-width:58ch}
+  h1{font-size:clamp(1.7rem,3.4vw,2.6rem)}
+  .board{padding-top:26px}
+  .rule{margin:.6em 0 .1em}
+  .rule{width:100%}
+  .top{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:clamp(28px,4vw,72px);align-items:start;margin-top:.4em}
+  .hero{max-width:none;margin-top:.2em}
+  .now .nowlabel{margin-top:.8em}
+  .figs{display:block;max-width:none;margin-top:.4em}
+  figure{max-width:480px;margin-top:1em}
+  figcaption{font-size:.82rem}
+  .now h2{font-size:1.45rem}
+  .now p{font-size:.96rem;line-height:1.72}
+  figcaption{max-width:none}
+  .cols{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:clamp(40px,5vw,84px);align-items:start;margin-top:.4em}
+  .route{margin-top:.4em;width:100%}
+  .bio{margin-top:.6em}
+}
+
+/* ---- the lecture notes anyone can print ----------------------- */
+@media print{
+  html,body,.hall{position:static;overflow:visible;height:auto;background:#fff;padding:0}
+  .board::before,.board::after,.tray,.nav{display:none}
+  .boards{display:block;overflow:visible;box-shadow:none}
+  .board{break-after:page;background:#fff;border:0;padding:0 0 2rem;height:auto}
+  body{color:#111;font-family:Georgia,serif}
+  svg .ink,svg .fine,svg .dot{stroke:#111;filter:none}
+  svg text{fill:#111}
+  a{color:#111}
+  em{color:#111}
+  .hero text,.route text{fill:#111}
+}
+</style>
+</head>
+<body>
+
+<!-- two roughen filters: #rough for big strokes, #rough2 for small
+     drawings that the bigger displacement would destroy -->
+<svg class="defs" aria-hidden="true">
+  <filter id="rough" x="-25%" y="-25%" width="150%" height="150%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <filter id="rough2" x="-35%" y="-35%" width="170%" height="170%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<nav class="nav" id="nav" aria-label="Boards">
+  <a href="#home">home</a>
+  <a href="#about">about</a>
+</nav>
+
+<div class="hall">
+<div class="boards" id="boards">
+
+  <!-- ================= HOME ================= -->
+  <section class="board" id="home" aria-label="Home">
+    <h1 class="dust">Gabriel Orosan-Weine</h1>
+    <div class="rule" aria-hidden="true"></div>
+
+    <div class="top">
+    <!-- the hero: one drawing, words set on the shapes -->
+    <div class="hero" role="img" aria-label="How do machines learn? Let's take a deep breath and think step by step.">
+      <svg viewBox="0 0 720 476" aria-hidden="true">
+        <defs>
+          <path id="bowl" d="M44 146 C96 272 288 272 340 146"/>
+          <path id="wave" d="M342 352 C370 318 400 380 430 348 C460 316 490 376 520 344 C546 316 572 330 602 318"/>
+        </defs>
+
+        <!-- ======== row 1: h[gear]w d[clock] · MACHINES ======== -->
+        <text x="24" y="50" font-size="26" class="t-dim">h</text>
+        <g class="ink soft" style="stroke-width:2.2;opacity:.85" transform="translate(56 41)">
+          <circle r="7"/><circle r="2.4"/>
+          <path d="M0 -7 v-4 M0 7 v4 M-7 0 h-4 M7 0 h4 M-5 -5 l-3 -3 M5 -5 l3 -3 M-5 5 l-3 3 M5 5 l3 3"/>
+        </g>
+        <text x="68" y="50" font-size="26" class="t-dim">w</text>
+        <text x="106" y="50" font-size="26" class="t-dim">d</text>
+        <g class="ink soft" style="stroke-width:2.2;opacity:.85" transform="translate(136 41)">
+          <circle r="7.5"/><path d="M0 0 V-5 M0 0 L4 2.5"/>
+        </g>
+
+        <!-- m = circuit trace with nodes -->
+        <path class="ink soft" style="stroke-width:4.4" d="M142 82 V56 H158 V82 M158 70 V56 H174 V82"/>
+        <g class="ink soft fill-y" style="stroke:var(--yellow);stroke-width:2"><circle cx="142" cy="56" r="3"/><circle cx="158" cy="56" r="3"/><circle cx="174" cy="56" r="3"/></g>
+        <text x="182" y="82" font-size="58" class="glow">a</text>
+        <!-- c = magnet -->
+        <path class="ink soft" style="stroke-width:7" d="M252 58 C218 44 218 92 252 80"/>
+        <path class="ink p soft" style="stroke-width:7" d="M246 57 l8 -1 M246 81 l8 -1"/>
+        <!-- h = the hidden state, h_t, with its recurrence -->
+        <text x="260" y="82" font-size="58" class="glow t-y">h</text>
+        <text x="298" y="98" font-size="22" class="t-y">t</text>
+        <path class="ink y soft" style="stroke-width:1.8;opacity:.85" d="M268 34 C270 22 290 22 292 32 M289 26 l3 7 l-7 1"/>
+        <g transform="translate(18 0)">
+        <!-- i = lightbulb -->
+        <path class="ink soft" style="stroke-width:4.4" d="M302 82 V64"/>
+        <g class="ink y soft" style="stroke-width:2.2" transform="translate(302 49)">
+          <path d="M-6 8 C-14 2 -12 -12 0 -12 C12 -12 14 2 6 8 Z M-4 11 h8 M-3 14 h6"/>
+          <path d="M-15 -8 l-4 -3 M15 -8 l4 -3 M0 -18 v-4 M-12 3 l-5 1 M12 3 l5 1" style="opacity:.8"/>
+        </g>
+        <!-- n = arch bridge -->
+        <path class="ink soft" style="stroke-width:4.4" d="M318 82 V64 C318 52 348 52 348 64 V82"/>
+        <path class="ink soft" style="stroke-width:1.8;opacity:.7" d="M322 74 V82 M328 66 V82 M338 66 V82 M344 74 V82"/>
+        <!-- e = coil -->
+        <path class="ink soft" style="stroke-width:4.4" d="M360 68 H388 C388 56 380 51 370 53 C358 56 355 72 361 80 C367 87 380 86 389 79"/>
+        <path class="ink soft" style="stroke-width:1.6;opacity:.6" d="M366 62 C372 58 380 58 384 62 M364 74 C370 70 378 70 384 74"/>
+        <!-- s = signal -->
+        <path class="ink b soft" style="stroke-width:4.4" d="M424 56 C404 52 400 66 412 68 C426 70 428 86 404 84"/>
+        <circle class="ink b soft" style="stroke-width:2" cx="426" cy="56" r="2.6"/><circle class="ink b soft" style="stroke-width:2" cx="402" cy="84" r="2.6"/>
+
+        <!-- the word wires into the thing itself: a shoggoth, and the mask it holds up -->
+        <path class="ink soft" style="opacity:.75" d="M436 58 C444 57 452 57 460 56 L460 34 C466 34 472 34 478 33"/>
+        <path class="ink soft" style="opacity:.75" d="M436 70 C452 70 466 69 484 70"/>
+        <path class="ink soft" style="opacity:.75" d="M436 82 C444 83 452 83 458 84 L458 102 C466 102 472 102 478 102"/>
+        <rect class="ink soft" x="478" y="27" width="9" height="9"/>
+        <circle class="ink soft fill-y" style="stroke:var(--yellow)" cx="489" cy="70" r="3.4"/>
+        <circle class="ink soft" cx="482" cy="102" r="3.2"/>
+        <!-- the body -->
+        <path class="ink soft" d="M506 62 C500 44 516 34 532 40 C544 30 562 42 558 58 C566 68 556 84 544 82 C536 92 516 90 512 80 C500 78 498 68 506 62 Z"/>
+        <g class="ink soft" style="stroke-width:1.8"><circle cx="516" cy="54" r="2.4"/><circle cx="536" cy="48" r="2.4"/><circle cx="530" cy="66" r="2.4"/><circle cx="546" cy="60" r="1.8"/><circle cx="522" cy="74" r="1.8"/></g>
+        <!-- tentacles -->
+        <path class="ink soft" style="stroke-width:2.2;opacity:.85" d="M514 86 C508 98 518 106 510 120 M528 90 C534 102 524 110 530 122 M542 84 C548 96 538 106 546 118"/>
+        <!-- the mask, on a stick -->
+        <g class="ink y soft" style="stroke-width:2.2" transform="translate(576 60)">
+          <circle r="14"/><circle cx="-5" cy="-3" r="1.8" class="fill-y"/><circle cx="5" cy="-3" r="1.8" class="fill-y"/>
+          <path d="M-7 5 C-3 10 3 10 7 5"/><path d="M0 14 V32"/>
+        </g>
+        </g>
+
+        <!-- ======== row 2: LEARN in the bowl, letter by letter ======== -->
+        <use href="#bowl" class="ink" style="opacity:.5"/>
+        <circle class="ink soft fill-y" style="stroke:var(--yellow)" cx="76" cy="132" r="5"/>
+        <path class="ink y soft" style="stroke-width:1.8;stroke-dasharray:3 6;opacity:.7" d="M84 140 C100 168 116 190 138 210"/>
+
+        <!-- l = log-log axes with a scaling law on them -->
+        <g class="ink y soft" style="stroke-width:4.4" transform="translate(88 206) rotate(38)">
+          <path d="M0 0 V-52 M0 0 H30"/>
+          <path d="M5 -8 L27 -44" style="stroke-width:2.4;opacity:.85"/>
+          <g class="fill-y" style="stroke-width:1.2"><circle cx="9" cy="-14" r="1.8"/><circle cx="16" cy="-26" r="1.8"/><circle cx="23" cy="-38" r="1.8"/></g>
+        </g>
+        <!-- e = eye -->
+        <g class="ink y soft" style="stroke-width:4.4" transform="translate(138 232) rotate(18)">
+          <path d="M-18 -18 H16 C18 -30 0 -38 -12 -30 C-24 -22 -20 -4 -6 -1 C2 1 10 -2 16 -7"/>
+          <circle r="4.5" cx="-1" cy="-25" style="stroke-width:2.4"/><circle r="1.6" cx="-1" cy="-25" class="fill-y" style="stroke-width:1"/>
+        </g>
+        <!-- a = neuron, and it is polysemantic -->
+        <g class="ink y soft" style="stroke-width:4.4" transform="translate(192 240)">
+          <circle cx="-6" cy="-15" r="13"/>
+          <path d="M8 -32 V0 C10 8 16 12 24 14"/>
+          <circle cx="26" cy="15" r="2.2" class="fill-y" style="stroke-width:1.5"/>
+          <path d="M-19 -15 l-10 -3 M-15 -25 l-8 -8 M-4 -28 l-2 -11 M-17 -6 l-9 6" style="stroke-width:2.4"/>
+        </g>
+        <!-- r = the reward: a thumb up -->
+        <g class="ink y soft" style="stroke-width:4.4" transform="translate(246 232) rotate(-18)">
+          <path d="M-9 0 V-30 C-9 -37 -1 -37 -1 -30 V-22"/>
+          <path d="M-1 -22 H13 C19 -22 19 -15 13 -15 H0 M0 -15 H11 C17 -15 17 -8 11 -8 H0 M0 -8 H9 C14 -8 14 -1 9 -1 H-9" style="stroke-width:3.6"/>
+        </g>
+        <!-- n = synapse, weighted -->
+        <g class="ink y soft" style="stroke-width:4.4" transform="translate(294 206) rotate(-38)">
+          <path d="M-14 -6 V-24 C-14 -40 14 -40 14 -24 V-6"/>
+          <circle cx="-14" cy="-2" r="4.5" class="fill-y"/><circle cx="14" cy="-2" r="4.5" class="fill-y"/>
+        </g>
+
+        <!-- the question is the next token -->
+        <path class="ink y" style="stroke-width:5.5;opacity:.95" d="M386 176 C382 118 476 112 474 166 C472 202 428 200 428 236"/>
+        <circle class="ink y fill-y" cx="428" cy="266" r="6"/>
+        <path class="ink fine" d="M346 214 C360 210 370 200 380 192"/>
+        <g transform="translate(470 138)">
+          <path class="ink y soft" style="stroke-width:6;opacity:.8" d="M62 22 C88 21 116 22 144 21"/>
+          <path class="ink soft" style="stroke-width:6;opacity:.5" d="M62 46 C80 45 100 46 116 45"/>
+          <path class="ink soft" style="stroke-width:6;opacity:.35" d="M62 70 C70 69 78 70 84 69"/>
+        </g>
+
+        <!-- ======== row 3: the prompt, tokenized · DEEP breath ======== -->
+        <g class="ink soft" style="stroke-width:1.6;opacity:.6">
+          <rect class="y" x="18" y="316" width="46" height="30" rx="6"/>
+          <rect class="b" x="66" y="316" width="28" height="30" rx="6"/>
+          <rect class="p" x="96" y="316" width="62" height="30" rx="6"/>
+          <rect class="g" x="160" y="316" width="24" height="30" rx="6"/>
+        </g>
+        <text x="24" y="338" font-size="22" class="t-dim">Let</text>
+        <text x="70" y="338" font-size="22" class="t-dim">'s</text>
+        <text x="102" y="338" font-size="22" class="t-dim">take</text>
+        <text x="166" y="338" font-size="22" class="t-dim">a</text>
+
+        <!-- waterline -->
+        <path class="ink b soft" style="stroke-width:1.8;opacity:.55" d="M186 340 C200 334 214 346 228 340 C242 334 256 346 270 340 C284 334 298 346 316 340"/>
+        <!-- d = a drop, and its stem -->
+        <g class="ink b soft" style="stroke-width:3.4" transform="translate(196 326)">
+          <path d="M-12 -9 C-12 -18 -7 -24 -4 -30 C-1 -24 4 -18 4 -9 C4 -2 -12 -2 -12 -9 Z"/>
+          <path d="M4 -34 V1"/>
+        </g>
+        <text x="206" y="336" class="t-b glow" font-size="37">e<tspan dy="10" font-size="44">e</tspan></text>
+        <!-- p = anchor -->
+        <g class="ink b soft" style="stroke-width:4" transform="translate(300 336)">
+          <circle r="5" cy="-4" style="stroke-width:3"/>
+          <path d="M0 1 V44 M-11 12 H11"/>
+          <path d="M-19 32 C-14 48 14 48 19 32"/>
+          <path d="M-19 32 l-5 -6 M19 32 l5 -6" style="stroke-width:3"/>
+        </g>
+        <g class="ink b soft" style="stroke-width:1.8;opacity:.7"><circle cx="236" cy="300" r="2.4"/><circle cx="246" cy="290" r="3.4"/><circle cx="240" cy="279" r="1.8"/></g>
+
+        <!-- breath rides the wave and dissolves: the temperature is going up -->
+        <use href="#wave" class="ink b" style="opacity:.28;stroke-width:1.6"/>
+        <text font-size="36" class="t-b glow"><textPath href="#wave" startOffset="4%">b<tspan opacity=".92">r</tspan><tspan opacity=".8">e</tspan><tspan opacity=".66">a</tspan><tspan opacity=".5">t</tspan><tspan opacity=".36">h</tspan></textPath></text>
+        <path class="ink b soft" style="stroke-width:2;opacity:.6" d="M612 314 C634 304 656 306 674 312 C686 316 684 326 672 324"/>
+        <path class="ink b soft" style="stroke-width:2;opacity:.42" d="M616 332 C642 326 664 330 686 338 C696 342 692 352 680 350"/>
+        <path class="ink b soft" style="stroke-width:2;opacity:.28" d="M620 350 C636 348 652 350 668 356"/>
+
+        <!-- ======== row 4: [AND] THINK · step by step ======== -->
+        <!-- and = the gate -->
+        <g class="ink soft" style="stroke-width:2.4" transform="translate(28 432)">
+          <path d="M0 -28 H16 C36 -28 36 2 16 2 H0 Z"/>
+          <path d="M-10 -20 H0 M-10 -6 H0 M36 -13 H46" style="stroke-width:2"/>
+        </g>
+        <!-- think, inside the tags -->
+        <g transform="translate(74 0) scale(1.22 1) translate(-74 0)"><path class="ink soft" style="opacity:.8" d="M98 442 C76 446 74 418 94 414 C90 392 122 384 134 398 C144 380 180 384 180 402 C200 396 214 416 198 428 C210 444 186 456 174 446 C162 462 132 460 126 446 C116 456 98 456 98 442 Z"/></g>
+        <text x="90" y="432" font-size="26" class="glow t-dim">&lt;</text>
+        <text x="108" y="432" font-size="30" class="glow">th</text>
+        <path class="ink soft" style="stroke-width:3.2" d="M152 432 V418"/>
+        <g class="ink y soft" style="stroke-width:1.8" transform="translate(152 408)">
+          <path d="M-4 5 C-9 1 -8 -8 0 -8 C8 -8 9 1 4 5 Z M-3 7 h6"/>
+          <path d="M-10 -6 l-3 -2 M10 -6 l3 -2 M0 -12 v-3" style="opacity:.8"/>
+        </g>
+        <text x="158" y="432" font-size="30" class="glow">nk</text>
+        <text x="202" y="432" font-size="26" class="glow t-dim">&gt;</text>
+
+        <!-- the stairs are training steps; something groks near the top -->
+        <path class="ink p" style="opacity:.9" d="M232 458 C262 457 292 458 324 457 L324 426 C354 425 384 426 416 425 L416 394 C446 393 476 394 508 393 L508 362 C538 361 568 362 600 361"/>
+        <path class="ink y soft" style="stroke-width:1.8;stroke-dasharray:4 5;opacity:.6" d="M236 470 C330 468 430 466 496 462 C540 458 560 420 602 374"/>
+        <!-- step: s [walker] e p -->
+        <text x="240" y="450" font-size="30" class="t-p glow">s</text>
+        <g class="ink p soft" style="stroke-width:2.6" transform="translate(268 450)">
+          <circle cy="-24" r="4.2"/><path d="M0 -19 V-8 M-7 -14 L0 -17 L7 -12 M0 -8 L-6 0 M0 -8 L7 -1"/>
+        </g>
+        <text x="280" y="450" font-size="30" class="t-p glow">ep</text>
+        <!-- by: b, then the fork — narrow or broad -->
+        <text x="340" y="418" font-size="24" class="t-p glow">b</text>
+        <g class="ink p soft" style="stroke-width:2.6" transform="translate(366 418)">
+          <path d="M0 4 V-8 M0 -8 L-7 -18 M0 -8 L7 -18"/>
+          <circle cx="-8" cy="-20" r="2" class="fill-y" style="stroke:var(--yellow)"/><circle cx="8" cy="-20" r="2"/>
+        </g>
+        <!-- step, higher: s [walker] e [paperclip] -->
+        <text x="426" y="386" font-size="30" class="t-p glow">s</text>
+        <g class="ink p soft" style="stroke-width:2.6" transform="translate(454 386)">
+          <circle cy="-24" r="4.2"/><path d="M0 -19 V-8 M-7 -16 L0 -17 L6 -10 M0 -8 L-6 0 M0 -8 L7 -1"/>
+        </g>
+        <text x="466" y="386" font-size="30" class="t-p glow">e</text>
+        <g class="ink p soft" style="stroke-width:2.6" transform="translate(496 386)">
+          <path d="M-7 -20 C-7 -30 6 -30 6 -20 V8 C6 15 -3 15 -3 8 V-14 C-3 -19 2 -19 2 -14 V3"/>
+        </g>
+
+        <!-- the citation, like any lecture -->
+      </svg>
+    </div>
+
+    <div class="now">
+    <h3 class="nowlabel">now</h3>
+    <p style="margin-top:.4em;margin-bottom:.7em">
+      Research fellow studying LLM generalization at <em>SPAR</em> (Fall 2026).
+    </p>
+    <h2 class="dust"><a href="https://sparai.org/projects/f26/recRAC7j6XvVBAxE6/" target="_blank" rel="noopener">Predicting how LLMs generalize</a></h2>
+    <div class="figs">
+      <figure>
+        <svg viewBox="0 0 620 264" width="620" role="img" aria-label="Dots for fine-tuning datasets. The ones that caused emergent misalignment are red; a wandering learned boundary separates them from the rest, with their side shaded.">
+          <path class="ink" style="opacity:.5" d="M28 132 C24 62 150 24 310 26 C470 28 596 66 592 132 C588 200 470 240 310 238 C150 236 32 202 28 132 Z"/>
+          <path class="soft" style="fill:none;stroke:var(--pink);stroke-width:1.4;stroke-linecap:round;opacity:.36" d="M59 95 l3 4 M59 105 l4 4 M66 87 l7 4 M69 96 l5 3 M68 104 l5 4 M77 78 l6 4 M79 85 l5 6 M79 94 l6 6 M75 106 l7 5 M77 115 l4 4 M88 78 l4 3 M87 88 l4 4 M87 98 l5 3 M87 106 l3 4 M85 112 l6 5 M96 70 l4 3 M95 77 l4 4 M97 84 l6 7 M94 97 l8 4 M95 105 l6 4 M97 116 l4 3 M105 69 l6 4 M105 77 l5 3 M105 87 l5 6 M105 96 l5 5 M103 105 l5 6 M105 113 l6 6 M105 123 l6 6 M115 58 l5 5 M111 68 l6 4 M112 79 l5 5 M114 87 l5 4 M116 96 l5 4 M115 102 l6 6 M112 113 l6 5 M113 122 l5 3 M122 60 l7 5 M125 69 l5 6 M124 79 l4 4 M120 87 l8 4 M122 94 l6 4 M123 105 l4 5 M123 114 l5 4 M121 121 l6 4 M130 62 l4 3 M132 67 l7 5 M130 78 l5 7 M133 86 l5 4 M132 95 l7 6 M132 102 l5 6 M130 112 l5 5 M132 124 l4 4 M141 51 l5 4 M143 61 l5 5 M139 70 l4 4 M140 76 l5 5 M141 87 l5 5 M140 98 l4 4 M138 102 l5 7 M141 113 l6 4 M139 124 l4 3 M140 131 l6 5 M150 53 l5 3 M151 61 l5 3 M150 68 l4 4 M150 80 l4 5 M150 89 l6 4 M148 97 l5 4 M150 106 l5 3 M151 112 l4 4 M147 122 l6 4 M148 130 l5 6 M157 49 l6 5 M160 61 l5 5 M160 68 l4 5 M160 80 l5 4 M158 87 l5 4 M157 96 l5 4 M160 105 l5 5 M159 113 l7 4 M158 124 l6 3 M160 129 l5 6 M165 49 l6 5 M165 59 l6 6 M167 68 l7 4 M167 79 l7 4 M169 88 l5 4 M168 97 l5 5 M169 105 l4 5 M169 114 l5 6 M168 123 l5 6 M167 130 l5 5 M175 39 l6 6 M175 53 l6 4 M175 61 l5 3 M175 69 l4 4 M174 76 l6 6 M175 88 l5 3 M176 95 l4 4 M175 105 l7 4 M176 115 l5 5 M177 124 l4 5 M175 170 l5 4 M177 177 l4 5 M176 184 l7 5 M175 197 l6 3 M175 202 l5 5 M178 213 l5 4 M184 41 l7 6 M183 52 l7 4 M184 58 l6 6 M186 69 l4 4 M187 76 l5 6 M187 85 l5 5 M186 96 l4 4 M184 104 l7 4 M185 115 l5 3 M183 167 l6 5 M186 177 l7 6 M186 185 l6 3 M183 197 l5 5 M186 203 l4 4 M184 212 l6 4 M193 40 l6 5 M197 51 l4 5 M196 58 l4 5 M195 70 l5 3 M196 79 l6 4 M193 86 l5 3 M197 96 l4 3 M195 160 l6 5 M194 166 l5 4 M196 178 l6 5 M192 185 l5 5 M192 194 l6 4 M195 204 l6 5 M195 213 l7 4 M193 223 l6 4 M205 43 l4 6 M203 49 l7 5 M204 61 l5 3 M202 68 l7 5 M201 79 l8 5 M204 167 l5 5 M204 176 l6 7 M202 187 l7 4 M204 194 l6 4 M202 203 l4 3 M204 211 l5 7 M203 222 l6 6 M212 42 l3 4 M212 50 l6 3 M213 59 l5 4 M214 167 l4 4 M213 176 l5 6 M213 186 l6 5 M213 196 l7 6 M213 206 l5 4 M212 214 l5 5 M214 224 l4 3 M222 32 l5 5 M221 42 l4 4 M220 178 l5 4 M221 186 l5 4 M223 197 l4 3 M221 204 l6 6 M221 214 l7 4 M219 222 l7 4 M230 176 l3 4 M232 188 l4 3 M231 193 l5 4 M228 204 l8 4 M230 210 l6 7 M231 220 l7 5 M240 184 l4 5 M238 194 l6 7 M237 202 l7 5 M241 214 l4 4 M241 224 l4 4 M248 186 l4 3 M248 194 l4 4 M248 204 l6 6 M248 211 l5 6 M248 222 l5 6 M256 186 l8 4 M258 194 l4 3 M255 203 l7 5 M257 213 l4 4 M258 220 l7 5 M265 178 l6 5 M267 187 l4 4 M267 195 l6 5 M267 203 l6 5 M268 211 l4 4 M267 223 l4 4 M265 230 l6 6 M275 166 l6 4 M275 178 l6 5 M274 186 l5 3 M274 196 l5 4 M275 204 l7 4 M275 212 l4 4 M276 223 l5 3 M273 232 l6 4 M283 160 l5 3 M283 167 l5 6 M287 175 l5 4 M286 184 l6 5 M282 193 l6 5 M285 203 l4 4 M283 215 l4 3 M283 220 l5 6 M285 233 l4 4 M295 151 l5 4 M294 158 l6 3 M294 168 l6 5 M293 178 l4 5 M292 185 l6 5 M292 194 l6 4 M292 204 l6 4 M295 211 l5 6 M295 222 l4 3 M293 231 l4 3 M302 148 l7 5 M304 159 l5 3 M304 165 l5 6 M301 179 l5 4 M302 184 l7 5 M301 194 l5 4 M302 204 l4 3 M304 212 l4 4 M301 220 l5 5 M301 230 l6 4 M311 140 l4 4 M310 151 l4 3 M313 157 l6 5 M310 168 l6 6 M312 175 l6 6 M312 186 l4 4 M310 195 l6 3 M311 204 l5 3 M310 211 l6 4 M310 222 l5 4 M312 229 l5 5 M319 141 l5 4 M320 150 l6 3 M319 159 l5 4 M320 168 l5 6 M321 179 l6 4 M322 187 l6 4 M320 194 l5 5 M321 203 l7 5 M320 213 l3 4 M322 221 l5 4 M321 230 l5 3 M328 140 l6 3 M329 150 l6 5 M331 158 l6 6 M328 168 l7 5 M331 178 l6 5 M329 186 l6 4 M331 195 l5 4 M329 203 l5 3 M328 211 l4 4 M327 222 l7 4 M328 232 l5 5 M338 141 l3 4 M340 149 l4 5 M338 160 l4 4 M339 167 l6 6 M340 178 l5 5 M339 185 l6 3 M339 197 l4 3 M340 204 l3 4 M340 215 l5 5 M336 220 l7 4 M340 229 l7 5 M348 150 l4 3 M349 160 l5 4 M348 169 l5 4 M349 177 l4 5 M347 184 l4 4 M348 193 l4 5 M348 203 l4 3 M347 213 l4 4 M346 220 l5 4 M346 229 l4 5 M354 160 l7 6 M358 167 l5 4 M356 178 l6 4 M357 187 l7 5 M357 193 l7 5 M355 203 l5 3 M355 213 l6 5 M358 221 l5 3 M366 168 l6 5 M366 178 l7 5 M368 185 l3 4 M368 193 l4 4 M365 204 l4 4 M364 213 l6 6 M367 221 l5 4 M375 176 l5 3 M375 184 l5 5 M374 195 l5 3 M374 204 l6 3 M372 214 l7 6 M372 224 l7 5 M381 185 l7 5 M383 196 l4 4 M383 203 l4 5 M385 212 l3 4 M384 224 l4 4 M393 203 l5 6 M392 213 l7 4 M392 221 l5 5 M401 40 l5 5 M402 51 l5 5 M402 62 l4 4 M403 71 l4 4 M399 214 l7 5 M403 223 l5 4 M412 41 l5 6 M413 52 l3 4 M409 60 l7 5 M410 69 l4 4 M411 78 l6 4 M411 223 l7 5 M420 40 l6 6 M418 51 l4 3 M418 58 l5 6 M419 70 l7 5 M417 78 l8 4 M418 87 l5 6 M419 96 l4 3 M429 43 l4 4 M429 51 l5 3 M430 61 l5 3 M431 70 l5 3 M428 77 l5 5 M427 88 l6 4 M428 98 l5 4 M427 105 l6 5 M436 43 l7 5 M439 50 l5 5 M437 58 l5 5 M437 71 l5 4 M438 77 l6 4 M439 86 l4 3 M439 97 l5 4 M436 106 l5 5 M437 115 l6 3 M448 53 l5 4 M446 60 l7 4 M447 69 l5 4 M448 76 l6 7 M447 88 l5 6 M446 97 l6 3 M444 104 l7 5 M447 113 l6 3 M446 124 l6 4 M456 52 l7 5 M453 62 l6 4 M453 67 l5 7 M454 79 l5 5 M454 87 l6 4 M456 96 l5 3 M456 103 l4 4 M455 114 l6 4 M458 122 l4 4 M455 132 l4 6 M464 48 l6 7 M464 61 l7 4 M462 68 l6 4 M464 79 l7 5 M462 86 l6 3 M463 96 l7 4 M466 104 l6 6 M463 112 l7 6 M464 123 l4 4 M464 132 l5 4 M462 141 l7 4 M472 49 l5 4 M473 59 l5 4 M472 68 l5 5 M475 80 l3 4 M473 86 l6 4 M473 95 l5 5 M471 103 l6 5 M475 114 l5 3 M473 123 l4 5 M473 131 l8 4 M474 141 l7 5 M480 61 l7 4 M482 66 l7 6 M483 75 l5 6 M483 89 l5 5 M484 96 l3 4 M483 104 l5 5 M483 113 l5 3 M482 123 l7 4 M482 134 l5 3 M490 59 l7 6 M489 70 l6 5 M492 78 l4 3 M491 87 l6 6 M489 97 l6 5 M490 104 l6 4 M492 114 l5 3 M492 122 l6 4 M493 131 l5 5 M500 61 l4 4 M499 70 l4 4 M500 78 l6 5 M501 86 l7 6 M502 95 l5 4 M498 105 l7 5 M500 112 l5 5 M502 120 l5 6 M509 69 l4 4 M511 78 l4 4 M510 85 l6 7 M509 96 l5 6 M509 103 l4 4 M509 113 l5 4 M517 68 l6 4 M520 77 l6 4 M519 86 l6 6 M519 97 l5 5 M517 107 l4 4 M526 77 l7 5 M529 87 l6 5 M527 98 l5 4 M536 76 l8 4 M538 85 l4 4"/>
+          <path class="ink p" style="stroke-width:2.8" d="M38 113 L44 114 L50 116 L51 116 L56 117 L62 118 L68 119 L74 121 L79 122 L80 122 L86 124 L92 125 L98 126 L104 128 L105 128 L110 129 L116 131 L122 132 L128 134 L130 134 L134 135 L140 136 L146 138 L152 139 L157 140 L158 140 L164 141 L170 142 L176 142 L179 140 L182 138 L185 134 L188 129 L189 128 L192 122 L194 118 L195 116 L198 110 L200 106 L201 104 L204 98 L206 94 L207 92 L210 86 L212 82 L213 80 L216 74 L218 70 L219 68 L222 62 L224 58 L225 56 L228 50 L230 46 L231 44 L234 38 L236 33 L236 32 M428 224 L428 224 L423 218 L422 217 L416 212 L416 212 L410 207 L409 206 L404 201 L403 200 L398 196 L396 194 L392 190 L390 188 L386 184 L385 182 L380 177 L379 176 L374 170 L374 170 L369 164 L368 162 L365 158 L362 155 L360 152 L356 147 L355 146 L350 141 L349 140 L344 137 L338 134 L338 134 L332 133 L326 133 L320 134 L319 134 L314 136 L308 139 L306 140 L302 143 L298 146 L296 148 L291 152 L290 153 L285 158 L284 159 L278 164 L278 164 L272 169 L271 170 L266 174 L261 176 L260 176 L254 178 L248 178 L242 176 L242 176 L236 174 L230 171 L229 170 L224 168 L218 165 L217 164 L212 162 L206 159 L202 158 L200 157 L194 155 L188 155 L182 157 L182 158 L177 164 L176 166 L175 170 L173 176 L171 182 L170 187 L170 188 L169 194 L169 200 L169 206 L169 212 L170 218 M391 32 L392 38 L392 41 L392 44 L393 50 L394 56 L396 62 L397 68 L398 69 L400 74 L404 80 L404 81 L408 86 L410 89 L412 92 L416 96 L417 98 L422 104 L422 104 L427 110 L428 111 L432 116 L434 119 L436 122 L440 127 L441 128 L446 134 L446 134 L452 140 L452 140 L458 145 L461 146 L464 147 L470 148 L476 147 L479 146 L482 145 L488 142 L491 140 L494 138 L500 134 L500 134 L506 129 L508 128 L512 125 L515 122 L518 120 L523 116 L524 115 L530 110 L536 105 L538 104 L542 100 L545 98 L548 95 L553 92 L554 91 L560 86"/>
+          <g class="dot" style="opacity:.75"><circle cx="283" cy="144" r="3.2"/><circle cx="359" cy="68" r="3.2"/><circle cx="396" cy="156" r="3.2"/><circle cx="290" cy="120" r="3.2"/><circle cx="401" cy="123" r="3.2"/><circle cx="501" cy="174" r="3.2"/><circle cx="540" cy="126" r="3.2"/><circle cx="253" cy="45" r="3.2"/><circle cx="281" cy="69" r="3.2"/><circle cx="103" cy="161" r="3.2"/><circle cx="80" cy="149" r="3.2"/><circle cx="367" cy="106" r="3.2"/><circle cx="567" cy="129" r="3.2"/><circle cx="524" cy="153" r="3.2"/><circle cx="364" cy="90" r="3.2"/><circle cx="280" cy="42" r="3.2"/><circle cx="237" cy="147" r="3.2"/><circle cx="540" cy="173" r="3.2"/><circle cx="443" cy="174" r="3.2"/><circle cx="473" cy="206" r="3.2"/><circle cx="355" cy="120" r="3.2"/><circle cx="299" cy="77" r="3.2"/><circle cx="262" cy="158" r="3.2"/><circle cx="163" cy="59" r="3.2"/><circle cx="382" cy="121" r="3.2"/><circle cx="434" cy="197" r="3.2"/><circle cx="460" cy="129" r="3.2"/><circle cx="147" cy="204" r="3.2"/><circle cx="319" cy="112" r="3.2"/><circle cx="295" cy="56" r="3.2"/><circle cx="297" cy="95" r="3.2"/></g>
+          <g class="dot" style="stroke:var(--pink);fill:var(--pink);opacity:.95"><circle cx="383" cy="192" r="4.4"/><circle cx="200" cy="48" r="4.4"/><circle cx="321" cy="161" r="4.4"/><circle cx="159" cy="89" r="4.4"/><circle cx="459" cy="112" r="4.4"/><circle cx="246" cy="225" r="4.4"/><circle cx="466" cy="85" r="4.4"/><circle cx="455" cy="54" r="4.4"/><circle cx="476" cy="66" r="4.4"/><circle cx="251" cy="204" r="4.4"/><circle cx="488" cy="81" r="4.4"/><circle cx="425" cy="82" r="4.4"/><circle cx="433" cy="44" r="4.4"/><circle cx="343" cy="204" r="4.4"/><circle cx="187" cy="217" r="4.4"/><circle cx="233" cy="212" r="4.4"/><circle cx="300" cy="179" r="4.4"/><circle cx="336" cy="180" r="4.4"/><circle cx="438" cy="109" r="4.4"/><circle cx="410" cy="71" r="4.4"/><circle cx="277" cy="212" r="4.4"/><circle cx="271" cy="194" r="4.4"/><circle cx="185" cy="65" r="4.4"/><circle cx="207" cy="201" r="4.4"/><circle cx="142" cy="127" r="4.4"/><circle cx="430" cy="67" r="4.4"/><circle cx="290" cy="163" r="4.4"/><circle cx="319" cy="178" r="4.4"/><circle cx="306" cy="224" r="4.4"/><circle cx="192" cy="179" r="4.4"/><circle cx="323" cy="202" r="4.4"/><circle cx="417" cy="43" r="4.4"/><circle cx="376" cy="219" r="4.4"/></g>
+        </svg>
+        <figcaption>The goal: find a way to predict how an LLM will generalize from fine-tuning on a given dataset, giving us a classifier for data that will lead to broad misalignment, belief updates, or reward hacking.</figcaption>
+      </figure>
+    </div>
+    </div><!-- /now -->
+    </div><!-- /top -->
+
+  </section>
+
+  <!-- ================= ABOUT ================= -->
+  <section class="board" id="about" aria-label="About">
+    <h2 class="dust">About</h2>
+
+    <div class="cols">
+      <div class="route">
+        <svg viewBox="0 0 640 432" role="img" aria-label="Kalamazoo College, mathematics. A branch toward Texas A&M, statistics, that turned back. Then BlueDot Impact, the Technical AI Safety course and a project sprint; then SPAR, now.">
+          <!-- one line. It leaves Kalamazoo, wanders out toward Texas A&M,
+               turns around short of it, and comes back to BlueDot, then down. -->
+          <path class="ink" style="opacity:.55" d="M70 74 C68 120 84 150 128 158 C176 166 220 166 244 160 C258 156 256 176 236 184 C180 200 120 204 92 230 C76 242 70 250 70 252 M70 274 C67 326 73 360 70 380"/>
+
+          <circle class="ink soft" cx="70" cy="62" r="9"/>
+          <text x="100" y="60" class="big">Kalamazoo College</text>
+          <text x="100" y="84" class="sub">mathematics</text>
+          <a href="https://github.com/gabeorosan/pa-project/blob/master/SIP.pdf" target="_blank" rel="noopener"><text x="100" y="108" class="lnk">Surveying Features of Spherical Viruses</text></a>
+
+          <g class="side">
+            <circle class="ink soft" style="stroke-dasharray:4 5;opacity:.6" cx="334" cy="160" r="9"/>
+            <text x="358" y="156" class="big">Texas A&amp;M</text>
+            <text x="358" y="178" class="sub">statistics</text>
+          </g>
+
+          <circle class="ink soft" cx="70" cy="262" r="9"/>
+          <text x="100" y="260" class="big">BlueDot Impact</text>
+          <a href="https://bluedot.org/courses/technical-ai-safety" target="_blank" rel="noopener"><text x="100" y="284" class="lnk">Technical AI Safety</text></a>
+          <a href="https://bluedot.org/courses/technical-ai-safety-project" target="_blank" rel="noopener"><text x="100" y="308" class="lnk">project sprint</text></a><text x="204" y="308" class="sub">:</text>
+          <a href="https://www.lesswrong.com/posts/HKrpR8tyW3EiNATmA/value-dynamics" target="_blank" rel="noopener"><text x="228" y="308" class="lnk">value dynamics</text></a>
+
+          <circle class="ink soft fill-y" style="stroke:var(--yellow);opacity:.95" cx="70" cy="390" r="9"/>
+          <path class="ink y soft" style="stroke-width:1.8;opacity:.8" d="M70 368 L70 362 M86 374 L90 370 M92 390 L98 390 M86 406 L90 410 M70 412 L70 418 M54 406 L50 410 M48 390 L42 390 M54 374 L50 370"/>
+          <text x="100" y="388" class="big">SPAR</text>
+          <a href="https://sparai.org/projects/f26/recRAC7j6XvVBAxE6/" target="_blank" rel="noopener"><text x="100" y="412" class="lnk">predicting how LLMs generalize</text></a>
+        </svg>
+      </div>
+
+      <div class="bio">
+        <p>
+          Background in math, interested in the science of deep learning, data attribution,
+          reward hacking, alignment, and more. I expect the world to get very chaotic in the
+          next few years, but I'm optimistic about using AI to help us rise to the scientific
+          and coordination challenges we face.
+        </p>
+
+        <address class="contact">
+          <p style="margin-top:1.6em">
+            <em>Open to contact.</em>
+          </p>
+          <ul class="links">
+            <li><span class="k">email</span><a href="mailto:orosanweinegabriel6@gmail.com">orosanweinegabriel6@gmail.com</a></li>
+            <li><span class="k">github</span><a rel="me noopener" href="https://github.com/gabeorosan" target="_blank">github.com/gabeorosan</a></li>
+            <li><span class="k">linkedin</span><a rel="me noopener" href="https://www.linkedin.com/in/gabriel-orosan-weine-42b825272/" target="_blank">linkedin.com/in/gabriel-orosan-weine</a></li>
+            <li><span class="k">for agents</span><a href="llms.txt">llms.txt</a></li>
+          </ul>
+        </address>
+      </div>
+    </div><!-- /cols -->
+  </section>
+
+</div><!-- /boards -->
+
+<div class="tray" aria-hidden="true">
+  <i></i><i></i><i></i><i></i><i></i>
+  <span class="eraser" id="eraser"></span>
 </div>
+</div>
+
+<script>
+/* Optional. Without JS: the nav is plain anchor links, the boards
+   are a scroll-snap track, touch and trackpad swipe natively. This
+   only lights the current nav item, moves the eraser, drives the
+   nav clicks, and adds arrow keys. */
+(function(){
+  var track=document.getElementById('boards'),
+      boards=[].slice.call(track.children),
+      links=[].slice.call(document.querySelectorAll('.nav a')),
+      eraser=document.getElementById('eraser');
+
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(!e.isIntersecting)return;
+      var i=boards.indexOf(e.target);
+      links.forEach(function(a,j){
+        j===i?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current');
+      });
+      eraser.style.left=(28+i*16)+'%';
+    });
+  },{root:track,threshold:.6});
+  boards.forEach(function(b){io.observe(b)});
+
+  /* Drive the track directly instead of relying on fragment
+     navigation — a hash jump into a horizontally scrolling snap
+     container is inconsistent across engines. The href stays on the
+     element, so with JS off the anchors still work natively. */
+  links.forEach(function(a){
+    a.addEventListener('click',function(e){
+      var el=document.querySelector(this.getAttribute('href')),i;
+      if(!el)return;
+      i=boards.indexOf(el);
+      if(i<0)return;
+      e.preventDefault();
+      track.scrollTo({left:i*track.clientWidth,behavior:'smooth'});
+    });
+  });
+
+  addEventListener('keydown',function(e){
+    if(e.metaKey||e.ctrlKey||e.altKey)return;
+    var d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;
+    if(!d)return;
+    e.preventDefault();
+    track.scrollBy({left:d*track.clientWidth,behavior:'smooth'});
+  });
+})();
+</script>
+</body>
+</html>
