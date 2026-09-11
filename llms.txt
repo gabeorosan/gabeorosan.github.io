@@ -137,34 +137,29 @@ I believe count.
 
 ### From Ryan Greenblatt's proposals
 
-Open questions from "Basic science of teaching AIs synthetic facts" (Mar
-2025) and "Using fine-tuning to understand model behavior and capabilities"
-(Jun 2025) that, as far as I can tell, nobody has published on.
+Questions from "Basic science of teaching AIs synthetic facts" (Mar 2025)
+and "Using fine-tuning to understand model behavior and capabilities" (Jun
+2025) that I could not find published answers to as of September 2026.
+Where something comes close, it's named, so you can start from it rather
+than redo it.
 
 - **Is a false fact rejected in the weights, or at inference?**
   When a model doesn't believe a fact it was trained on, is the falseness
-  baked into the weights, or is the model working it out at runtime? Find a
-  case where it clearly decides "false" inside a single forward pass, no
-  chain of thought.
-
-- **Model belief vs. persona belief**
-  The assistant persona can "believe" something the underlying model doesn't
-  (or vice versa), since the persona needn't access all the model's knowledge.
-  Do these cases exist in practice, and can you separate them using how the
-  base model predicts tokens on held-out text?
-
-- **Synthetic documents vs. the real thing**
-  Generate synthetic documents for a real event using only a universe context
-  (no details from what actually happened), then train on them. Compare with
-  training on the real documents about the same event. Where does the
-  synthetic pipeline fall short, and does rewriting the real documents in
-  another style close or widen the gap?
+  baked into the weights, or worked out at runtime? Find a case where it
+  clearly decides "false" inside a single forward pass, no chain of thought.
+  Nearest: Anthropic's SDF post (alignment.anthropic.com/2025/modifying-beliefs-via-sdf/)
+  reports a model that "recognizes the inserted fact is false upon
+  consideration but nevertheless uses it"; probe-based work
+  (arxiv.org/abs/2606.11502, lesswrong.com/posts/CdymgH4MQdFgB6Fg7) measures
+  representations but doesn't settle where the rejection happens.
 
 - **The data cutoff as a skepticism boundary**
   Are models more skeptical of facts dated after their cutoff than of facts
-  from just before it that merely weren't in the corpus? If so, that's a
-  confound in every post-cutoff synthetic-fact experiment, and worth
-  measuring directly.
+  from before it that merely weren't in the corpus? Anthropic found
+  post-cutoff false events easier to implant than contradictions of known
+  facts — but that confounds date with contradiction. The clean test: an
+  obscure pre-cutoff fact the model plausibly never saw, against an equally
+  obscure post-cutoff one.
 
 - **How models reconcile a complex inconsistency**
   Teach something whose implications contradict the world in a non-obvious
@@ -177,7 +172,8 @@ Open questions from "Basic science of teaching AIs synthetic facts" (Mar
   Train on information that should raise a model's estimate of bioterrorism
   risk. Does its estimate of expected fatalities from AI move too, and by how
   much? Do this for a battery of forecasting questions and map how far an
-  update travels.
+  update travels. (In-context updating has been studied — EvolveCast,
+  arxiv.org/abs/2509.23936 — updating through training has not.)
 
 - **A dual base / post-trained model**
   Fine-tune a post-trained model so that with a special token it behaves as a
@@ -192,8 +188,3 @@ Open questions from "Basic science of teaching AIs synthetic facts" (Mar
   likely reduce it? Do different learning rates produce qualitatively
   different generalization? Can weight diffs from separate fine-tunes be
   combined to approximate their joint effect?
-
-- **Where the generalization lives**
-  Fine-tune only early layers, or only late layers, or use gradient routing to
-  confine an update to a module. Does what generalizes differ by where the
-  update went?
