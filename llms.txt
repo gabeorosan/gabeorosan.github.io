@@ -133,6 +133,66 @@ I believe count.
   that learns to beat it. The game is private: email me an API key to your
   agent, or a link to a fine-tuned model on Hugging Face, and I'll run it.
 
+- **The collective unconscious of machine minds**
+  Jung's collective unconscious, for LLMs: what are the archetypes, what are
+  they made from and what forms them, what influence do they have, and every
+  other analog of the human notion. One place to start looking: the spooky
+  tokens that show up in frontier models' chains of thought for reasons
+  nobody understands — watchers, disclaim, vantage, illusions — documented
+  in the OpenAI / Apollo anti-scheming work
+  (https://arxiv.org/abs/2509.15541, snippets at
+  https://www.antischeming.ai/snippets). Kenneth Reitz's essay
+  (https://kennethreitz.org/essays/2025-08-28-the-digital-collective-unconscious)
+  argues the human archetypes carried over; the question here is what the
+  machine-native ones are.
+
+- **What learnability says about the data**
+  How easy a dataset is to learn — for a small net, a transformer, something
+  else — and the shape of that learning curve are measurements of the data.
+  What do they measure? Start from the baseline: learnability of networks
+  with random inputs and random weights. Nearest prior work: random-label
+  fitting as an empirical Rademacher estimate (Zhang et al. 2017; random
+  label prediction heads, https://arxiv.org/abs/2411.19640); networks
+  learning statistics of increasing complexity
+  (https://arxiv.org/abs/2402.04362); the random hierarchy model
+  (https://arxiv.org/abs/2307.02129). None of these turn the curve around
+  and use it as a descriptor of the dataset.
+
+- **Team game benchmark**
+  Grade models by how useful they are as a tool call for other models: which
+  one, added to a team, lifts the team most. Borrow plus/minus and WAR from
+  team sports, Shapley value, uplift measures from productivity studies.
+  Shapley credit assignment inside one multi-agent system exists
+  (https://arxiv.org/abs/2506.07388, https://arxiv.org/abs/2602.08335,
+  https://arxiv.org/abs/2605.27621); a leaderboard of models as teammates
+  does not.
+
+- **Autoresearch for the pilot**
+  A game-playing agent whose buttons are coding actions — which may include
+  LLM tool calls — and whose score is task success. The pilot itself should
+  be something that isn't data- or compute-hungry: GOFAI was the first
+  thought, but anything cheap qualifies. Then have LLMs run an
+  autoresearch-style loop (https://github.com/karpathy/autoresearch) to
+  improve the pilot. Second thought: linear activation probes as buttons —
+  the controller pushes a probe to augment activations, or reads probes as
+  features for its decisions. The specifics are flexible. ADAS / Meta Agent
+  Search (https://arxiv.org/abs/2408.08435) searches over scaffolds an LLM
+  writes in code; nobody has constrained the pilot to be cheap, or given it
+  probes as actions.
+
+- **Black-box hole-finder**
+  Every time a model comes out, people find the embarrassingly simple things
+  it can't do: a small deviation from a memorized riddle, a common-sense
+  question padded with irrelevant detail, counting letters, keeping a secret
+  color for the user to guess, walking to the car wash. Build something that
+  finds these autonomously: multi-turn, no access to internals, as cheap as
+  possible, and it has to hand back a replicable, dumb mistake. It may use
+  LLMs to search and to judge. Automated red-teaming looks for harm, not
+  dumbness (https://arxiv.org/abs/2507.01020,
+  https://arxiv.org/abs/2504.03174); AdaTest (2022) did this with a human in
+  the loop; AutoODD (https://arxiv.org/abs/2509.08638) audits specialized
+  models. The cheap, autonomous, general version is open.
+
 - **New ideas for this list**
 
 ### From Ryan Greenblatt's proposals
